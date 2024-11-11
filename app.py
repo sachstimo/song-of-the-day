@@ -6,8 +6,8 @@ import csv
 
 app = Flask(__name__)
 
-CLIENT_ID = "8487d0a5b4f84ce89e0c66e4b4669444"
-CLIENT_SECRET = "03b502d6d5964806a218b9d99d76f063"
+CLIENT_ID = "your client id"
+CLIENT_SECRET = "your secret key"
 
 last_request_time = 0
 request_interval = 3  # Minimum interval between requests in seconds
