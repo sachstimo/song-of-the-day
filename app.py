@@ -2,11 +2,12 @@ from flask import Flask, jsonify, render_template, request
 import requests
 import random
 import time
+import csv
 
 app = Flask(__name__)
 
-CLIENT_ID = "Your Client ID"
-CLIENT_SECRET = "Your Client Secret"
+CLIENT_ID = "8487d0a5b4f84ce89e0c66e4b4669444"
+CLIENT_SECRET = "03b502d6d5964806a218b9d99d76f063"
 
 last_request_time = 0
 request_interval = 3  # Minimum interval between requests in seconds
@@ -21,6 +22,7 @@ def get_spotify_token():
     })
     return auth_response.json().get("access_token")
 
+# Get a song recommendation based on the mood
 def get_song_for_mood(mood):
     global last_request_time
 
@@ -131,9 +133,22 @@ def get_song_for_mood(mood):
         print(f"Error: Could not fetch song recommendation. Status Code: {response.status_code}")
         return {"error": "Could not fetch song recommendation."}
 
+# Load quotes for the quote page
+def load_quotes_from_csv(filename):
+    quotes = []
+    with open(filename, 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            quotes.append({"quote": row["quote"], "author": row["author"]})
+    return quotes
+
 @app.route('/')
 def home():
     return render_template('index.html')
+
+@app.route('/get_song')
+def song_page():
+    return render_template('song.html')
 
 @app.route('/get_song', methods=['POST'])
 def get_song():
@@ -142,9 +157,13 @@ def get_song():
     if not mood:
         return jsonify({"error": "Please select a mood."})
     song = get_song_for_mood(mood)
-    if "error" in song:
-        return jsonify(song)
     return jsonify(song)
+
+@app.route('/get_quote', methods=['GET'])
+def get_quote():
+    quotes = load_quotes_from_csv('static/quotes.csv')
+    selected_quote = random.choice(quotes)
+    return render_template('quote.html', quote=selected_quote["quote"], author=selected_quote["author"])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')

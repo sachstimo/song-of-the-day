@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Song of the Day</title>
+    <title>API Homepage</title>
     <link rel="icon" type="image/png" href="/static/favicon_cc.png">
     <style>
         body {
@@ -12,156 +12,63 @@
             text-align: center;
             margin: 0;
             padding: 50px;
-            background-color: white;
-            transition: background 0.5s ease;
+            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            color: #414040;
         }
         .container {
             max-width: 600px;
-            margin: 0 auto;
+            width: 100%;
             background-color: white;
             border-radius: 10px;
-            padding: 20px;
+            padding: 30px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin: 0 auto;
         }
         h1 {
             font-size: 36px;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
         p {
-            font-size: 16px;
+            font-size: 18px;
             color: #555;
         }
-        select, button {
+        .endpoint {
+            margin: 40px 0;
+        }
+        .endpoint p {
+            margin: 20px 0;
+        }
+        .button {
             padding: 10px 20px;
-            margin: 10px;
             font-size: 16px;
-            border-radius: 5px;
+            border-radius: 20px;
             border: none;
             cursor: pointer;
-        }
-        button {
-            background-color: #1DB954;
+            background-color: #888;
             color: white;
             transition: background-color 0.3s;
+            text-decoration: none;
         }
-        button:hover {
-            background-color: #1aa34a;
-        }
-        .song-container {
-            margin-top: 30px;
-            display: none;
-        }
-        img {
-            border-radius: 10px;
-            margin-top: 20px;
-            width: 100%;
-            max-width: 300px;
-        }
-        .waiting-animation {
-            margin-top: 10px;
-            display: none;
-            font-size: 14px;
-            color: #888;
-            animation: fade 1s infinite;
-        }
-        @keyframes fade {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .button:hover {
+            background-color: #666;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Song of the Day</h1>
-        <p>Select your mood to get a song recommendation for the day</p>
-        <select id="mood">
-            <option value="Happy" selected>Happy</option>
-            <option value="Sad">Sad</option>
-            <option value="Energetic">Energetic</option>
-            <option value="Relaxed">Relaxed</option>
-        </select>
-        <button onclick="getSong()">Get Song</button>
-        <div id="error-message" style="color: red; display: none;"></div>
-
-        <div class="song-container">
-            <h2 id="song-name"></h2>
-            <p id="artist-name"></p>
-            <a id="song-link" target="_blank">
-                <img id="song-image" alt="Song Cover">
-            </a>
+        <h1>Welcome to Timo's API</h1>
+        <p>Explore the available endpoints:</p>
+        <div class="endpoint">
+            <p><strong>Get Song Recommendation</strong></p>
+            <p>Receive a song recommendation based on your current mood</p>
+            <a href="/get_song" class="button">Get Song</a>
         </div>
-
-        <!-- Waiting animation -->
-        <div class="waiting-animation" id="waiting-animation">
-            <p>Fetching a new song for you...</p>
+        <div class="endpoint">
+            <p><strong>Get Music-related Quote</strong></p>
+            <p>Get an inspiring quote related to music</p>
+            <a href="/get_quote" class="button">Get Quote</a>
         </div>
     </div>
-
-    <script>
-        function getSong() {
-            const mood = document.getElementById("mood").value;
-            const waitingAnimation = document.getElementById("waiting-animation");
-            waitingAnimation.style.display = "block";
-
-            fetch('/get_song', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ mood })
-            })
-            .then(response => response.json())
-            .then(data => {
-                waitingAnimation.style.display = "none";
-
-                if (data.error) {
-                    const errorMessageElement = document.getElementById("error-message");
-                    errorMessageElement.innerText = data.error;
-                    errorMessageElement.style.display = "block";
-                    return;
-                }
-
-                document.getElementById("error-message").style.display = "none";
-                document.getElementById("song-name").innerText = data.name;
-                document.getElementById("artist-name").innerText = "by " + data.artist;
-                document.getElementById("song-link").href = data.url;
-                document.getElementById("song-image").src = data.image;
-                document.querySelector(".song-container").style.display = "block";
-
-                // Update background based on song cover
-                updateBackground(data.image);
-            })
-            .catch(() => {
-                waitingAnimation.style.display = "none";
-                const errorMessageElement = document.getElementById("error-message");
-                errorMessageElement.innerText = "An error occurred. Please try again later.";
-                errorMessageElement.style.display = "block";
-            });
-        }
-
-        function updateBackground(imageUrl) {
-            const img = new Image();
-            img.crossOrigin = "Anonymous";
-            img.src = imageUrl;
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-
-                const data = ctx.getImageData(0, 0, img.width, img.height).data;
-                let r = 0, g = 0, b = 0;
-                for (let i = 0; i < data.length; i += 4) {
-                    r += data[i];
-                    g += data[i + 1];
-                    b += data[i + 2];
-                }
-                r = Math.floor(r / (data.length / 4));
-                g = Math.floor(g / (data.length / 4));
-                b = Math.floor(b / (data.length / 4));
-
-                document.body.style.background = `linear-gradient(to bottom, rgb(${r}, ${g}, ${b}), #ffffff)`;
-            };
-        }
-    </script>
 </body>
 </html>
