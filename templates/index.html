@@ -5,13 +5,14 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Song of the Day</title>
+    <link rel="icon" type="image/png" href="/static/favicon_cc.png">
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
             margin: 0;
             padding: 50px;
-            background-color: white; /* Initial background color set to white */
+            background-color: white;
             transition: background 0.5s ease;
         }
         .container {
@@ -25,10 +26,6 @@
         h1 {
             font-size: 36px;
             margin-bottom: 10px;
-        }
-        h2 {
-            font-size: 24px;
-            margin: 20px 0;
         }
         p {
             font-size: 16px;
@@ -60,10 +57,52 @@
             width: 100%;
             max-width: 300px;
         }
+        .waiting-animation {
+            margin-top: 10px;
+            display: none;
+            font-size: 14px;
+            color: #888;
+            animation: fade 1s infinite;
+        }
+        @keyframes fade {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Song of the Day</h1>
+        <p>Select your mood to get a song recommendation for the day</p>
+        <select id="mood">
+            <option value="Happy" selected>Happy</option>
+            <option value="Sad">Sad</option>
+            <option value="Energetic">Energetic</option>
+            <option value="Relaxed">Relaxed</option>
+        </select>
+        <button onclick="getSong()">Get Song</button>
+        <div id="error-message" style="color: red; display: none;"></div>
+
+        <div class="song-container">
+            <h2 id="song-name"></h2>
+            <p id="artist-name"></p>
+            <a id="song-link" target="_blank">
+                <img id="song-image" alt="Song Cover">
+            </a>
+        </div>
+
+        <!-- Waiting animation -->
+        <div class="waiting-animation" id="waiting-animation">
+            <p>Fetching a new song for you...</p>
+        </div>
+    </div>
+
     <script>
         function getSong() {
             const mood = document.getElementById("mood").value;
+            const waitingAnimation = document.getElementById("waiting-animation");
+            waitingAnimation.style.display = "block";
+
             fetch('/get_song', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -71,22 +110,36 @@
             })
             .then(response => response.json())
             .then(data => {
+                waitingAnimation.style.display = "none";
+
                 if (data.error) {
-                    alert(data.error);
+                    const errorMessageElement = document.getElementById("error-message");
+                    errorMessageElement.innerText = data.error;
+                    errorMessageElement.style.display = "block";
                     return;
                 }
+
+                document.getElementById("error-message").style.display = "none";
                 document.getElementById("song-name").innerText = data.name;
                 document.getElementById("artist-name").innerText = "by " + data.artist;
                 document.getElementById("song-link").href = data.url;
                 document.getElementById("song-image").src = data.image;
                 document.querySelector(".song-container").style.display = "block";
+
+                // Update background based on song cover
                 updateBackground(data.image);
+            })
+            .catch(() => {
+                waitingAnimation.style.display = "none";
+                const errorMessageElement = document.getElementById("error-message");
+                errorMessageElement.innerText = "An error occurred. Please try again later.";
+                errorMessageElement.style.display = "block";
             });
         }
 
         function updateBackground(imageUrl) {
             const img = new Image();
-            img.crossOrigin = "Anonymous"; // Allow cross-origin image access if possible
+            img.crossOrigin = "Anonymous";
             img.src = imageUrl;
             img.onload = function() {
                 const canvas = document.createElement('canvas');
@@ -110,26 +163,5 @@
             };
         }
     </script>
-</head>
-<body>
-    <div class="container">
-        <h1>Song of the Day</h1>
-        <p>Select your mood to get a song recommendation for the day</p>
-        <select id="mood">
-            <option value="Happy">Happy</option>
-            <option value="Sad">Sad</option>
-            <option value="Energetic">Energetic</option>
-            <option value="Relaxed">Relaxed</option>
-        </select>
-        <button onclick="getSong()">Get Song</button>
-
-        <div class="song-container">
-            <h2 id="song-name"></h2>
-            <p id="artist-name"></p>
-            <a id="song-link" target="_blank">
-                <img id="song-image" alt="Song Cover">
-            </a>
-        </div>
-    </div>
 </body>
 </html>
